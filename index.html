@@ -49,7 +49,7 @@
       padding: 0;
       min-height: 100%;
       background:
-        radial-gradient(circle at top left, rgba(194, 151, 255, 0.16), transparent 28%),
+        radial-gradient(circle at top left, rgba(242, 231, 255, 0.16), transparent 28%),
         radial-gradient(circle at top right, rgba(157, 108, 255, 0.13), transparent 24%),
         linear-gradient(180deg, var(--page-bg) 0%, var(--page-bg-2) 100%);
       color: var(--text-main);
@@ -58,6 +58,7 @@
 
     body {
       padding: 24px;
+      filter: hue-rotate(86deg) invert(1);
     }
 
     .app {
@@ -105,7 +106,8 @@
 
     .layout {
       display: grid;
-      grid-template-columns: 360px minmax(0, 1fr);
+      /* grid-template-columns: 360px minmax(0, 1fr); */
+      grid-template-columns: minmax(0, 1fr);
       gap: 24px;
       align-items: start;
     }
@@ -628,22 +630,22 @@
   <div class="app">
     <section class="hero">
       <h1 class="hero__title">Коэффициент конкордации со связными рангами</h1>
-      <p class="hero__text">
+      <!-- <p class="hero__text">
         Алгоритм построен по методике из файла: матрица «эксперт–объект», обработка связных рангов,
         расчёт поправочных коэффициентов <strong>T<sub>i</sub></strong>, сумм рангов <strong>S<sub>j</sub></strong>,
         средней суммы <strong>Sср</strong>, коэффициента конкордации <strong>W</strong>, проверки по <strong>χ²</strong>
         и последовательного исключения эксперта-диссидента по величине <strong>ΣΔR<sub>i,j</sub></strong>. fileciteturn5file0
-      </p>
+      </p> -->
     </section>
 
     <div class="layout">
       <aside class="card">
         <section class="card__section">
           <h2 class="section-title">1. Параметры</h2>
-          <p class="section-text">
+          <!-- <p class="section-text">
             Можно вводить как уже готовые ранги, так и произвольные значения. Система сама приведёт каждую строку
             к рангам по порядку значений, а факт преобразования покажет в результатах. fileciteturn5file0
-          </p>
+          </p> -->
 
           <div class="field-grid">
             <div class="field-wrapper">
@@ -687,20 +689,20 @@
           <div class="button-row">
             <button class="button button--secondary button--full" id="exportButton" type="button" disabled>Экспорт в Excel</button>
           </div>
-          <p class="section-text section-text--last">
+          <!-- <p class="section-text section-text--last">
             При обработке связных рангов система присваивает одинаковым значениям средние ранги и считает T<sub>i</sub> по формуле
             <strong>T<sub>i</sub> = Σ n<sub>il</sub>(n<sub>il</sub><sup>2</sup> − 1)</strong>. fileciteturn5file0
-          </p>
+          </p> -->
         </section>
       </aside>
 
       <main class="workspace">
         <section class="card workspace-card">
           <h2 class="workspace-title">Матрица «эксперт — объект»</h2>
-          <p class="workspace-text">
+          <!-- <p class="workspace-text">
             По методике исходная таблица имеет размер p×m. Ниже вводятся оценки экспертов, после чего система строит
             обработанную матрицу рангов и все расчётные таблицы. fileciteturn5file0
-          </p>
+          </p> -->
 
           <div class="matrix-shell">
             <div class="matrix-scroll" id="inputMatrixContainer"></div>
@@ -715,10 +717,10 @@
         <section class="card results">
           <h2 class="results__title">Результаты расчёта</h2>
           <div id="resultsContainer">
-            <div class="results-empty">
+            <!-- <div class="results-empty">
               Здесь появятся исходная таблица, обработанная ранговая матрица, расчёт W, проверка согласованности,
               поиск диссидента, все итерации и экспорт в Excel.
-            </div>
+            </div> -->
           </div>
         </section>
       </main>
@@ -890,11 +892,14 @@
     const resetResults = () => {
       latestExportPayload = null;
       exportButton.disabled = true;
+      // resultsContainer.innerHTML = `
+      //   <div class="results-empty">
+      //     Здесь появятся исходная таблица, обработанная ранговая матрица, расчёт W, проверка согласованности,
+      //     поиск диссидента, все итерации и экспорт в Excel.
+      //   </div>
+      // `;
       resultsContainer.innerHTML = `
-        <div class="results-empty">
-          Здесь появятся исходная таблица, обработанная ранговая матрица, расчёт W, проверка согласованности,
-          поиск диссидента, все итерации и экспорт в Excel.
-        </div>
+       
       `;
     };
 
@@ -1022,12 +1027,15 @@
         const strictRanks = isStrictRankRow(rowValues);
         const rankLike = isRankLikeRow(rowValues);
 
-        let inputModeLabel = "Произвольные значения → ранги";
+        // let inputModeLabel = "Произвольные значения → ранги";
+        let inputModeLabel = "";
 
         if (strictRanks) {
-          inputModeLabel = "Готовые ранги";
+          // inputModeLabel = "Готовые ранги";
+          inputModeLabel = "";
         } else if (rankLike) {
-          inputModeLabel = "Связные ранги → средние ранги";
+          // inputModeLabel = "Связные ранги → средние ранги";
+          inputModeLabel = "";
         }
 
         return {
@@ -1298,7 +1306,7 @@
             <div class="summary-card__value">${escapeHtml(formatNumber(state.chiCalculated, 4))}</div>
           </div>
           <div class="summary-card">
-            <div class="summary-card__title">χ² критическое</div>
+            <div class="summary-card__title">χ² табличное</div>
             <div class="summary-card__value">${state.chiCritical === null ? "нет данных" : escapeHtml(formatNumber(state.chiCritical, 4))}</div>
           </div>
           <div class="summary-card">
@@ -1322,7 +1330,7 @@
         return `
           <div class="result-block">
             <div class="result-block__header">
-              <h3 class="result-block__title">${escapeHtml(titlePrefix)} — поиск диссидента</h3>
+              <h3 class="result-block__title">Поиск диссидента</h3>
             </div>
             <div class="result-block__content">
               <div class="note">Поиск диссидента не требуется: согласованность уже подтверждена либо дальнейшее сокращение комиссии невозможно. fileciteturn5file0</div>
@@ -1369,7 +1377,7 @@
       return `
         <div class="result-block">
           <div class="result-block__header">
-            <h3 class="result-block__title">${escapeHtml(titlePrefix)} — поиск диссидента</h3>
+            <h3 class="result-block__title">Поиск диссидента</h3>
           </div>
           <div class="result-block__content">
             <div class="matrix-shell">
@@ -1390,10 +1398,10 @@
               </div>
             </div>
 
-            <div class="note">
+            <!-- <div class="note">
               По формуле ΔR<sub>i,j</sub> = |R<sub>i,j</sub> − R(S<sub>j</sub>)| найден эксперт с максимальной суммой отклонений:
               <strong>${escapeHtml(state.dissidentName)}</strong>. Именно его ранжировка исключается из следующего расчёта. fileciteturn5file0
-            </div>
+            </div> -->
           </div>
         </div>
       `;
@@ -1516,7 +1524,7 @@
         processedTable: false,
         showTi: false,
         showRowMode: true,
-        noteHtml: '<div class="note">Строки с фиолетовой подсветкой содержат связные ранги, строки с мягкой сиреневой подсветкой были преобразованы из произвольных значений в ранги.</div>'
+        // noteHtml: '<div class="note">Строки с фиолетовой подсветкой содержат связные ранги, строки с мягкой сиреневой подсветкой были преобразованы из произвольных значений в ранги.</div>'
       });
 
       const processedMatrixHtml = renderMatrixTable({
@@ -1529,7 +1537,7 @@
         showTi: true,
         processedTable: true,
         showRowMode: true,
-        noteHtml: '<div class="note">Эта таблица соответствует шагам первичной обработки, расчёта T<sub>i</sub>, S<sub>j</sub>, Sср и Σ(S<sub>j</sub> − Sср)^2 перед первым исключением диссидента. fileciteturn5file0</div>'
+        // noteHtml: '<div class="note">Эта таблица соответствует шагам первичной обработки, расчёта T<sub>i</sub>, S<sub>j</sub>, Sср и Σ(S<sub>j</sub> − Sср)^2 перед первым исключением диссидента. fileciteturn5file0</div>'
       });
 
       let iterationsHtml = "";
@@ -1547,11 +1555,11 @@
             showTi: true,
             processedTable: true,
             showRowMode: true,
-            noteHtml: `
-              ${currentState.removedBeforeThisState ? `<div class="note">Перед этой итерацией исключён эксперт-диссидент: <strong>${escapeHtml(currentState.removedBeforeThisState)}</strong>.</div>` : ""}
-              <div class="note">${currentState.isConsistent ? "На этой итерации согласованность подтверждена." : "На этой итерации согласованность не подтверждена."}</div>
-              ${currentState.isConsistent || currentState.dissidentName === null ? "" : `<div class="note">По итогам этой итерации на следующем шаге исключается эксперт: <strong>${escapeHtml(currentState.dissidentName)}</strong>.</div>`}
-            `
+            // noteHtml: `
+            //   ${currentState.removedBeforeThisState ? `<div class="note">Перед этой итерацией исключён эксперт-диссидент: <strong>${escapeHtml(currentState.removedBeforeThisState)}</strong>.</div>` : ""}
+            //   <div class="note">${currentState.isConsistent ? "На этой итерации согласованность подтверждена." : "На этой итерации согласованность не подтверждена."}</div>
+            //   ${currentState.isConsistent || currentState.dissidentName === null ? "" : `<div class="note">По итогам этой итерации на следующем шаге исключается эксперт: <strong>${escapeHtml(currentState.dissidentName)}</strong>.</div>`}
+            // `
           });
 
           const searchHtml = renderDissidentSearch(currentState, objectNames, `Итерация ${stateIndex}`);
@@ -1566,7 +1574,24 @@
             </div>
           `;
 
-          iterationsHtml += iterationHtml + cardsHtml + searchHtml;
+          const iterationVerdict = currentState.isConsistent
+            ? {
+                code: "СОГЛАСОВАНО",
+                cssClass: "message-box message-box--success",
+                title: "Согласованность подтверждена",
+                label: `Итог итерации ${stateIndex}`,
+                text: "Проверка χ² выполнена успешно. Мнения комиссии согласованы, итоговое упорядочение объектов можно принимать в работу."
+              }
+            : {
+                code: "НЕ СОГЛАСОВАНО",
+                cssClass: "message-box message-box--warning",
+                title: "Согласованность не достигнута",
+                label: `Итог итерации ${stateIndex}`,
+                text: `После исключения эксперта «${currentState.removedBeforeThisState}» согласованность не достигнута.`
+              };
+          const iterationVerdictHtml = buildVerdictBlock(iterationVerdict);
+
+          iterationsHtml += iterationHtml + cardsHtml + iterationVerdictHtml + searchHtml;
         }
       } else {
         iterationsHtml = `
@@ -1582,10 +1607,10 @@
       }
 
       resultsContainer.innerHTML = `
-        ${buildVerdictBlock(finalVerdict)}
-        <div class="${finalVerdict.cssClass}">${escapeHtml(finalVerdict.code)}</div>
-        ${originalMatrixHtml}
-        ${processedMatrixHtml}
+      <div class="${finalVerdict.cssClass}">${escapeHtml(finalVerdict.code)}</div>
+      ${processedMatrixHtml}
+      ${originalMatrixHtml}
+     
         <div class="result-block">
           <div class="result-block__header">
             <h3 class="result-block__title">Показатели расчёта по полной комиссии</h3>
@@ -1594,10 +1619,19 @@
             ${renderSummaryCards(initialState, alphaValue)}
           </div>
         </div>
+        ${!initialState.isConsistent ? buildVerdictBlock({
+          code: "НЕ СОГЛАСОВАНО",
+          cssClass: "message-box message-box--warning",
+          title: "Необходим поиск диссидентов",
+          label: "Итог по полной комиссии",
+          text: "Согласованность мнений экспертов на полном составе комиссии не подтверждена. Требуется последовательное исключение экспертов-диссидентов."
+        }) : ""}
         ${renderDissidentSearch(initialState, objectNames, "Полная комиссия")}
         ${iterationsHtml}
-        ${renderTransformationProtocol(expertRows, objectNames)}
-        ${renderObjectRating(objectRating)}
+
+        <!-- ${renderTransformationProtocol(expertRows, objectNames)} -->
+        <!-- ${renderObjectRating(objectRating)} -->
+         ${buildVerdictBlock(finalVerdict)}
       `;
 
       latestExportPayload = {
@@ -1695,7 +1729,7 @@
         processedSheetRows.push([]);
         processedSheetRows.push(["W", initialState.wValue]);
         processedSheetRows.push(["χ² расчётное", initialState.chiCalculated]);
-        processedSheetRows.push(["χ² критическое", initialState.chiCritical]);
+        processedSheetRows.push(["χ² табличное", initialState.chiCritical]);
         processedSheetRows.push(["α", alphaValue]);
         processedSheetRows.push(["Sср", initialState.averageSum]);
         processedSheetRows.push(["Σ(Sj-Sср)^2", initialState.squaredDeviationSum]);
@@ -1714,7 +1748,7 @@
           iterationRows.push([]);
           iterationRows.push(["W", state.wValue]);
           iterationRows.push(["χ² расчётное", state.chiCalculated]);
-          iterationRows.push(["χ² критическое", state.chiCritical]);
+          iterationRows.push(["χ² табличное", state.chiCritical]);
           iterationRows.push(["α", alphaValue]);
           iterationRows.push(["Sср", state.averageSum]);
           iterationRows.push(["Σ(Sj-Sср)^2", state.squaredDeviationSum]);
@@ -1805,11 +1839,10 @@
       buildInputMatrix();
 
       const demoMatrix = [
-        [1, 4, 5, 2, 2],
-        [8, 8, 8, 1, 3],
-        [2, 2, 1, 5, 5],
-        [1, 2, 3, 4, 5],
-        [30, 10, 20, 40, 50]
+        [1, 7, 4, 2, 6],
+        [4, 1, 1, 8, 9],
+        [3, 4, 1, 1, 2],
+        [6, 6, 4, 3, 1],
       ];
 
       demoMatrix.forEach((rowValues, expertIndex) => {
