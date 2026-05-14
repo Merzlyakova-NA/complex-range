@@ -1,1 +1,1244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Расчет комплексного показателя качества</title>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --quality-calculator-bg: #f4f7fb;
+      --quality-calculator-surface: #ffffff;
+      --quality-calculator-surface-soft: #f8fafc;
+      --quality-calculator-border: #d9e2ec;
+      --quality-calculator-text: #172033;
+      --quality-calculator-muted: #667085;
+      --quality-calculator-primary: #2557d6;
+      --quality-calculator-primary-dark: #1d43a8;
+      --quality-calculator-success: #177245;
+      --quality-calculator-warning-bg: #fff7df;
+      --quality-calculator-warning-border: #e0b84f;
+      --quality-calculator-warning-text: #7a5600;
+      --quality-calculator-danger: #b42318;
+    }
 
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-block-size: 100vh;
+      margin: 0;
+      padding: 3.552vh;
+      background: var(--quality-calculator-bg);
+      color: var(--quality-calculator-text);
+      font-family: Arial, sans-serif;
+      font-size: 1.776vh;
+      line-height: 1.45;
+    }
+
+    .quality-calculator {
+      max-inline-size: 150vh;
+      margin-inline: auto;
+    }
+
+    .quality-calculator__header {
+      margin-block-end: 2.664vh;
+      padding: 3.552vh;
+      border: 0.111vh solid var(--quality-calculator-border);
+      border-radius: 1.776vh;
+      background: var(--quality-calculator-surface);
+      box-shadow: 0 1.332vh 3.552vh rgba(15, 23, 42, 0.08);
+    }
+
+    .quality-calculator__title {
+      margin: 0 0 1.332vh;
+      font-size: 3.108vh;
+      line-height: 1.2;
+    }
+
+    .quality-calculator__subtitle {
+      max-inline-size: 110vh;
+      margin: 0;
+      color: var(--quality-calculator-muted);
+      font-size: 1.776vh;
+    }
+
+    .quality-calculator__panel {
+      margin-block-end: 2.664vh;
+      padding: 2.664vh;
+      border: 0.111vh solid var(--quality-calculator-border);
+      border-radius: 1.776vh;
+      background: var(--quality-calculator-surface);
+      box-shadow: 0 0.888vh 2.664vh rgba(15, 23, 42, 0.06);
+    }
+
+    .quality-calculator__controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 1.776vh;
+    }
+
+    .quality-calculator__control {
+      display: flex;
+      flex-direction: column;
+      gap: 0.666vh;
+      min-inline-size: 20vh;
+    }
+
+    .quality-calculator__label {
+      color: var(--quality-calculator-muted);
+      font-size: 1.554vh;
+      font-weight: 700;
+    }
+
+    .quality-calculator__input,
+    .quality-calculator__select {
+      min-block-size: 4.662vh;
+      padding: 1.11vh 1.332vh;
+      border: 0.111vh solid var(--quality-calculator-border);
+      border-radius: 0.888vh;
+      background: var(--quality-calculator-surface);
+      color: var(--quality-calculator-text);
+      font: inherit;
+      outline: none;
+    }
+
+    .quality-calculator__input:focus,
+    .quality-calculator__select:focus {
+      border-color: var(--quality-calculator-primary);
+      box-shadow: 0 0 0 0.333vh rgba(37, 87, 214, 0.16);
+    }
+
+    .quality-calculator__button {
+      min-block-size: 4.662vh;
+      padding: 1.11vh 1.776vh;
+      border: 0.111vh solid var(--quality-calculator-primary);
+      border-radius: 0.888vh;
+      background: var(--quality-calculator-primary);
+      color: #ffffff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .quality-calculator__button:hover {
+      border-color: var(--quality-calculator-primary-dark);
+      background: var(--quality-calculator-primary-dark);
+      transform: translateY(-0.111vh);
+    }
+
+    .quality-calculator__button--secondary {
+      border-color: var(--quality-calculator-border);
+      background: var(--quality-calculator-surface-soft);
+      color: var(--quality-calculator-text);
+    }
+
+    .quality-calculator__button--secondary:hover {
+      border-color: var(--quality-calculator-primary);
+      background: #eef4ff;
+    }
+
+    .quality-calculator__button--success {
+      border-color: var(--quality-calculator-success);
+      background: var(--quality-calculator-success);
+    }
+
+    .quality-calculator__section {
+      margin-block-end: 2.664vh;
+      padding: 2.664vh;
+      border: 0.111vh solid var(--quality-calculator-border);
+      border-radius: 1.776vh;
+      background: var(--quality-calculator-surface);
+      box-shadow: 0 0.888vh 2.664vh rgba(15, 23, 42, 0.06);
+    }
+
+    .quality-calculator__section-title {
+      margin: 0 0 1.776vh;
+      font-size: 2.442vh;
+      line-height: 1.2;
+    }
+
+    .quality-calculator__table-wrap {
+      overflow-x: auto;
+      border: 0.111vh solid var(--quality-calculator-border);
+      border-radius: 1.332vh;
+      background: var(--quality-calculator-surface);
+    }
+
+    .quality-calculator__table {
+      min-inline-size: 128vh;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .quality-calculator__th,
+    .quality-calculator__td {
+      padding: 1.11vh;
+      border-inline-end: 0.111vh solid var(--quality-calculator-border);
+      border-block-end: 0.111vh solid var(--quality-calculator-border);
+      vertical-align: top;
+      text-align: start;
+    }
+
+    .quality-calculator__th {
+      background: #edf2f7;
+      font-weight: 700;
+    }
+
+    .quality-calculator__td--muted {
+      color: var(--quality-calculator-muted);
+    }
+
+    .quality-calculator__td--result {
+      font-weight: 700;
+    }
+
+    .quality-calculator__indicator-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.888vh;
+      min-inline-size: 22vh;
+    }
+
+    .quality-calculator__compact-input {
+      min-inline-size: 15vh;
+    }
+
+    .quality-calculator__wide-input {
+      min-inline-size: 22vh;
+    }
+
+    .quality-calculator__badge {
+      display: inline-flex;
+      align-items: center;
+      min-block-size: 2.886vh;
+      padding: 0.444vh 0.888vh;
+      border-radius: 88.8vh;
+      background: #eef4ff;
+      color: var(--quality-calculator-primary);
+      font-size: 1.443vh;
+      font-weight: 700;
+    }
+
+    .quality-calculator__badge--muted {
+      background: #f1f5f9;
+      color: var(--quality-calculator-muted);
+    }
+
+    .quality-calculator__badge--success {
+      background: #e7f7ef;
+      color: var(--quality-calculator-success);
+    }
+
+    .quality-calculator__message {
+      margin-block-start: 1.776vh;
+      padding: 1.332vh 1.776vh;
+      border-radius: 1.11vh;
+      background: #e7f7ef;
+      color: var(--quality-calculator-success);
+      font-weight: 700;
+    }
+
+    .quality-calculator__message--warning {
+      border: 0.111vh solid var(--quality-calculator-warning-border);
+      background: var(--quality-calculator-warning-bg);
+      color: var(--quality-calculator-warning-text);
+      font-weight: 400;
+    }
+
+    .quality-calculator__message--danger {
+      border: 0.111vh solid var(--quality-calculator-danger);
+      background: #fff1f0;
+      color: var(--quality-calculator-danger);
+      font-weight: 400;
+    }
+
+    .quality-calculator__list {
+      margin: 0;
+      padding-inline-start: 2.22vh;
+    }
+
+    .quality-calculator__note {
+      margin: 1.332vh 0 0;
+      color: var(--quality-calculator-muted);
+      font-size: 1.554vh;
+    }
+  </style>
+</head>
+<body>
+  <main class="quality-calculator">
+    <header class="quality-calculator__header">
+      <h1 class="quality-calculator__title">Расчет комплексного показателя качества</h1>
+      <p class="quality-calculator__subtitle">
+        Веб-форма строит исходную таблицу, нормирует числовые и порядковые показатели, исключает номинальные показатели, рассчитывает веса по суммам рангов и формирует рейтинг объектов по линейной свертке.
+      </p>
+    </header>
+
+    <section class="quality-calculator__panel">
+      <div class="quality-calculator__controls">
+        <label class="quality-calculator__control">
+          <span class="quality-calculator__label">Количество объектов</span>
+          <input class="quality-calculator__input" id="qualityCalculatorObjectCount" type="number" min="1" max="50" value="5">
+        </label>
+        <label class="quality-calculator__control">
+          <span class="quality-calculator__label">Количество показателей</span>
+          <input class="quality-calculator__input" id="qualityCalculatorIndicatorCount" type="number" min="1" max="50" value="4">
+        </label>
+        <button class="quality-calculator__button" id="qualityCalculatorApplySize" type="button">Построить таблицу</button>
+        <button class="quality-calculator__button quality-calculator__button--secondary" id="qualityCalculatorLoadExample" type="button">Загрузить пример</button>
+        <button class="quality-calculator__button quality-calculator__button--success" id="qualityCalculatorExportExcel" type="button">Экспорт в Excel</button>
+      </div>
+      <p class="quality-calculator__note">
+        Для числовых показателей направление влияет на нормировку: позитивный показатель максимизируется, негативный минимизируется.
+      </p>
+    </section>
+
+    <section class="quality-calculator__section">
+      <h2 class="quality-calculator__section-title">1. Исходные данные</h2>
+      <div id="qualityCalculatorDataTable"></div>
+    </section>
+
+    <section class="quality-calculator__section">
+      <h2 class="quality-calculator__section-title">2. Нормировка единичных показателей качества</h2>
+      <div id="qualityCalculatorNormalizationTable"></div>
+      <div id="qualityCalculatorWarnings"></div>
+    </section>
+
+    <section class="quality-calculator__section">
+      <h2 class="quality-calculator__section-title">3. Расчет весовых коэффициентов</h2>
+      <div id="qualityCalculatorWeightsTable"></div>
+    </section>
+
+    <section class="quality-calculator__section">
+      <h2 class="quality-calculator__section-title">4. Расчет комплексного показателя качества</h2>
+      <div id="qualityCalculatorResultsTable"></div>
+      <div id="qualityCalculatorConclusion"></div>
+    </section>
+  </main>
+
+  <script>
+    // Хранит все данные формы между пересчетами.
+    let qualityCalculatorState = {
+      objects: [],
+      indicators: [],
+      values: [],
+      ordinalValues: []
+    };
+
+    // Ограничивает число объектов и показателей безопасным диапазоном.
+    function getClampedCount(rawValue) {
+      let parsedValue = Number(rawValue);
+
+      if (!Number.isFinite(parsedValue)) {
+        return 1;
+      }
+
+      return Math.min(50, Math.max(1, Math.trunc(parsedValue)));
+    }
+
+    // Форматирует расчетные значения для таблиц.
+    function formatNumber(value) {
+      if (!Number.isFinite(value)) {
+        return "—";
+      }
+
+      return new Intl.NumberFormat("ru-RU", {
+        maximumFractionDigits: 4
+      }).format(value);
+    }
+
+    // Форматирует значения для экспорта без потери числового типа.
+    function roundNumber(value) {
+      if (!Number.isFinite(value)) {
+        return "";
+      }
+
+      return Math.round(value * 1000000) / 1000000;
+    }
+
+    // Читает число из пользовательской ячейки.
+    function parseUserNumber(value) {
+      if (value === null || value === undefined) {
+        return null;
+      }
+
+      let preparedValue = String(value).trim().replace(",", ".");
+
+      if (preparedValue === "") {
+        return null;
+      }
+
+      let parsedValue = Number(preparedValue);
+
+      if (!Number.isFinite(parsedValue)) {
+        return null;
+      }
+
+      return parsedValue;
+    }
+
+    // Возвращает значение ручной нормировки в границах от нуля до единицы.
+    function getOrdinalNormalizedValue(value) {
+      let parsedValue = parseUserNumber(value);
+
+      if (parsedValue === null) {
+        return null;
+      }
+
+      return Math.min(1, Math.max(0, parsedValue));
+    }
+
+    // Создает стартовую модель данных.
+    function createInitialState(objectCount, indicatorCount) {
+      let objects = [];
+      let indicators = [];
+      let values = [];
+      let ordinalValues = [];
+
+      for (let objectIndex = 0; objectIndex < objectCount; objectIndex += 1) {
+        objects.push({
+          name: `Объект ${objectIndex + 1}`
+        });
+
+        values.push([]);
+        ordinalValues.push([]);
+
+        for (let indicatorIndex = 0; indicatorIndex < indicatorCount; indicatorIndex += 1) {
+          values[objectIndex].push("");
+          ordinalValues[objectIndex].push("");
+        }
+      }
+
+      for (let indicatorIndex = 0; indicatorIndex < indicatorCount; indicatorIndex += 1) {
+        indicators.push({
+          name: `Показатель ${indicatorIndex + 1}`,
+          scale: "numeric",
+          direction: "positive",
+          rankSum: String(indicatorIndex + 1)
+        });
+      }
+
+      return {
+        objects: objects,
+        indicators: indicators,
+        values: values,
+        ordinalValues: ordinalValues
+      };
+    }
+
+    // Меняет размер модели с сохранением уже введенных данных.
+    function resizeState(objectCount, indicatorCount) {
+      let currentState = qualityCalculatorState;
+      let nextState = createInitialState(objectCount, indicatorCount);
+
+      for (let objectIndex = 0; objectIndex < objectCount; objectIndex += 1) {
+        if (currentState.objects[objectIndex]) {
+          nextState.objects[objectIndex] = currentState.objects[objectIndex];
+        }
+      }
+
+      for (let indicatorIndex = 0; indicatorIndex < indicatorCount; indicatorIndex += 1) {
+        if (currentState.indicators[indicatorIndex]) {
+          nextState.indicators[indicatorIndex] = currentState.indicators[indicatorIndex];
+        }
+      }
+
+      for (let objectIndex = 0; objectIndex < objectCount; objectIndex += 1) {
+        for (let indicatorIndex = 0; indicatorIndex < indicatorCount; indicatorIndex += 1) {
+          if (currentState.values[objectIndex] && currentState.values[objectIndex][indicatorIndex] !== undefined) {
+            nextState.values[objectIndex][indicatorIndex] = currentState.values[objectIndex][indicatorIndex];
+          }
+
+          if (currentState.ordinalValues[objectIndex] && currentState.ordinalValues[objectIndex][indicatorIndex] !== undefined) {
+            nextState.ordinalValues[objectIndex][indicatorIndex] = currentState.ordinalValues[objectIndex][indicatorIndex];
+          }
+        }
+      }
+
+      qualityCalculatorState = nextState;
+    }
+
+    // Возвращает человекочитаемое название шкалы.
+    function getScaleLabel(scale) {
+      if (scale === "numeric") {
+        return "Числовая";
+      }
+
+      if (scale === "ordinal") {
+        return "Порядковая";
+      }
+
+      return "Номинальная";
+    }
+
+    // Возвращает человекочитаемое название направления.
+    function getDirectionLabel(direction) {
+      if (direction === "negative") {
+        return "Негативный";
+      }
+
+      return "Позитивный";
+    }
+
+    // Собирает индексы показателей, участвующих в расчетах.
+    function getIncludedIndicatorIndexes() {
+      let indexes = [];
+
+      for (let indicatorIndex = 0; indicatorIndex < qualityCalculatorState.indicators.length; indicatorIndex += 1) {
+        let indicator = qualityCalculatorState.indicators[indicatorIndex];
+
+        if (indicator.scale !== "nominal") {
+          indexes.push(indicatorIndex);
+        }
+      }
+
+      return indexes;
+    }
+
+    // Нормирует числовую колонку по направлению показателя.
+    function getNumericNormalizedColumn(indicatorIndex) {
+      let numbers = [];
+      let result = [];
+
+      for (let objectIndex = 0; objectIndex < qualityCalculatorState.objects.length; objectIndex += 1) {
+        let numericValue = parseUserNumber(qualityCalculatorState.values[objectIndex][indicatorIndex]);
+
+        numbers.push(numericValue);
+
+        if (numericValue !== null) {
+          result.push(numericValue);
+        }
+      }
+
+      if (result.length === 0) {
+        return numbers.map(() => null);
+      }
+
+      let minValue = Math.min(...result);
+      let maxValue = Math.max(...result);
+      let rangeValue = maxValue - minValue;
+      let indicator = qualityCalculatorState.indicators[indicatorIndex];
+
+      return numbers.map((numericValue) => {
+        if (numericValue === null) {
+          return null;
+        }
+
+        if (rangeValue === 0) {
+          return 1;
+        }
+
+        if (indicator.direction === "negative") {
+          return (maxValue - numericValue) / rangeValue;
+        }
+
+        return (numericValue - minValue) / rangeValue;
+      });
+    }
+
+    // Рассчитывает полную матрицу нормированных значений.
+    function getNormalizedMatrix() {
+      let matrix = [];
+      let numericCache = {};
+
+      for (let indicatorIndex = 0; indicatorIndex < qualityCalculatorState.indicators.length; indicatorIndex += 1) {
+        let indicator = qualityCalculatorState.indicators[indicatorIndex];
+
+        if (indicator.scale === "numeric") {
+          numericCache[indicatorIndex] = getNumericNormalizedColumn(indicatorIndex);
+        }
+      }
+
+      for (let objectIndex = 0; objectIndex < qualityCalculatorState.objects.length; objectIndex += 1) {
+        matrix[objectIndex] = [];
+
+        for (let indicatorIndex = 0; indicatorIndex < qualityCalculatorState.indicators.length; indicatorIndex += 1) {
+          let indicator = qualityCalculatorState.indicators[indicatorIndex];
+
+          if (indicator.scale === "nominal") {
+            matrix[objectIndex][indicatorIndex] = null;
+          } else if (indicator.scale === "ordinal") {
+            matrix[objectIndex][indicatorIndex] = getOrdinalNormalizedValue(qualityCalculatorState.ordinalValues[objectIndex][indicatorIndex]);
+          } else {
+            matrix[objectIndex][indicatorIndex] = numericCache[indicatorIndex][objectIndex];
+          }
+        }
+      }
+
+      return matrix;
+    }
+
+    // Рассчитывает веса по обратным суммам рангов.
+    function getWeights() {
+      let includedIndicatorIndexes = getIncludedIndicatorIndexes();
+      let inverseRankSums = [];
+      let inverseRankSumTotal = 0;
+
+      for (let positionIndex = 0; positionIndex < includedIndicatorIndexes.length; positionIndex += 1) {
+        let indicatorIndex = includedIndicatorIndexes[positionIndex];
+        let rankSum = parseUserNumber(qualityCalculatorState.indicators[indicatorIndex].rankSum);
+        let inverseRankSum = rankSum !== null && rankSum > 0 ? 1 / rankSum : 0;
+
+        inverseRankSums.push(inverseRankSum);
+        inverseRankSumTotal += inverseRankSum;
+      }
+
+      let weights = {};
+
+      for (let positionIndex = 0; positionIndex < includedIndicatorIndexes.length; positionIndex += 1) {
+        let indicatorIndex = includedIndicatorIndexes[positionIndex];
+
+        weights[indicatorIndex] = inverseRankSumTotal > 0 ? inverseRankSums[positionIndex] / inverseRankSumTotal : 0;
+      }
+
+      return weights;
+    }
+
+    // Рассчитывает комплексный показатель и сортирует объекты.
+    function getResults() {
+      let normalizedMatrix = getNormalizedMatrix();
+      let weights = getWeights();
+      let includedIndicatorIndexes = getIncludedIndicatorIndexes();
+      let results = [];
+
+      for (let objectIndex = 0; objectIndex < qualityCalculatorState.objects.length; objectIndex += 1) {
+        let qualityValue = 0;
+
+        for (let positionIndex = 0; positionIndex < includedIndicatorIndexes.length; positionIndex += 1) {
+          let indicatorIndex = includedIndicatorIndexes[positionIndex];
+          let normalizedValue = normalizedMatrix[objectIndex][indicatorIndex];
+
+          if (Number.isFinite(normalizedValue)) {
+            qualityValue += weights[indicatorIndex] * normalizedValue;
+          }
+        }
+
+        results.push({
+          objectIndex: objectIndex,
+          objectName: qualityCalculatorState.objects[objectIndex].name,
+          qualityValue: qualityValue
+        });
+      }
+
+      results.sort((leftResult, rightResult) => rightResult.qualityValue - leftResult.qualityValue);
+
+      return results;
+    }
+
+    // Формирует предупреждения по неполным данным.
+    function getWarnings() {
+      let warnings = [];
+      let includedIndicatorIndexes = getIncludedIndicatorIndexes();
+      let normalizedMatrix = getNormalizedMatrix();
+      let weights = getWeights();
+
+      if (includedIndicatorIndexes.length === 0) {
+        warnings.push("Все показатели имеют номинальную шкалу, поэтому расчет комплексного показателя невозможен.");
+      }
+
+      for (let indicatorIndex = 0; indicatorIndex < qualityCalculatorState.indicators.length; indicatorIndex += 1) {
+        let indicator = qualityCalculatorState.indicators[indicatorIndex];
+
+        if (indicator.scale === "nominal") {
+          warnings.push(`Показатель «${indicator.name}» исключен из расчета, потому что имеет номинальную шкалу.`);
+        }
+
+        if (indicator.scale !== "nominal" && weights[indicatorIndex] === 0) {
+          warnings.push(`Для показателя «${indicator.name}» не задана положительная сумма рангов, его вес равен нулю.`);
+        }
+
+        if (indicator.scale === "numeric") {
+          let hasNumber = false;
+
+          for (let objectIndex = 0; objectIndex < qualityCalculatorState.objects.length; objectIndex += 1) {
+            if (parseUserNumber(qualityCalculatorState.values[objectIndex][indicatorIndex]) !== null) {
+              hasNumber = true;
+            }
+          }
+
+          if (!hasNumber) {
+            warnings.push(`Для числового показателя «${indicator.name}» нет числовых значений.`);
+          }
+        }
+      }
+
+      for (let objectIndex = 0; objectIndex < qualityCalculatorState.objects.length; objectIndex += 1) {
+        for (let positionIndex = 0; positionIndex < includedIndicatorIndexes.length; positionIndex += 1) {
+          let indicatorIndex = includedIndicatorIndexes[positionIndex];
+          let indicator = qualityCalculatorState.indicators[indicatorIndex];
+
+          if (normalizedMatrix[objectIndex][indicatorIndex] === null) {
+            warnings.push(`У объекта «${qualityCalculatorState.objects[objectIndex].name}» нет нормированного значения по показателю «${indicator.name}», в свертке оно считается равным нулю.`);
+          }
+        }
+      }
+
+      return warnings;
+    }
+
+    // Создает HTML таблицы исходных данных.
+    function renderDataTable() {
+      let tableElement = document.getElementById("qualityCalculatorDataTable");
+      let headerCells = qualityCalculatorState.indicators.map((indicator, indicatorIndex) => {
+        return `
+          <th class="quality-calculator__th">
+            <div class="quality-calculator__indicator-card">
+              <input class="quality-calculator__input quality-calculator__wide-input" data-field="indicator-name" data-indicator="${indicatorIndex}" type="text" value="${escapeHtml(indicator.name)}" aria-label="Название показателя">
+              <select class="quality-calculator__select" data-field="indicator-scale" data-indicator="${indicatorIndex}" aria-label="Тип шкалы">
+                <option value="numeric" ${indicator.scale === "numeric" ? "selected" : ""}>Числовая шкала</option>
+                <option value="ordinal" ${indicator.scale === "ordinal" ? "selected" : ""}>Порядковая шкала</option>
+                <option value="nominal" ${indicator.scale === "nominal" ? "selected" : ""}>Номинальная шкала</option>
+              </select>
+              <select class="quality-calculator__select" data-field="indicator-direction" data-indicator="${indicatorIndex}" aria-label="Направление показателя">
+                <option value="positive" ${indicator.direction === "positive" ? "selected" : ""}>Позитивный</option>
+                <option value="negative" ${indicator.direction === "negative" ? "selected" : ""}>Негативный</option>
+              </select>
+            </div>
+          </th>
+        `;
+      }).join("");
+
+      let bodyRows = qualityCalculatorState.objects.map((objectData, objectIndex) => {
+        let valueCells = qualityCalculatorState.indicators.map((indicator, indicatorIndex) => {
+          return `
+            <td class="quality-calculator__td">
+              <input class="quality-calculator__input quality-calculator__compact-input" data-field="indicator-value" data-object="${objectIndex}" data-indicator="${indicatorIndex}" type="text" value="${escapeHtml(qualityCalculatorState.values[objectIndex][indicatorIndex])}" aria-label="Значение показателя">
+            </td>
+          `;
+        }).join("");
+
+        return `
+          <tr>
+            <td class="quality-calculator__td">
+              <input class="quality-calculator__input quality-calculator__wide-input" data-field="object-name" data-object="${objectIndex}" type="text" value="${escapeHtml(objectData.name)}" aria-label="Название объекта">
+            </td>
+            ${valueCells}
+          </tr>
+        `;
+      }).join("");
+
+      tableElement.innerHTML = `
+        <div class="quality-calculator__table-wrap">
+          <table class="quality-calculator__table">
+            <thead>
+              <tr>
+                <th class="quality-calculator__th">Объект</th>
+                ${headerCells}
+              </tr>
+            </thead>
+            <tbody>
+              ${bodyRows}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    // Экранирует пользовательские значения перед вставкой в HTML.
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    // Создает HTML таблицы нормировки.
+    function renderNormalizationTable() {
+      let tableElement = document.getElementById("qualityCalculatorNormalizationTable");
+      let normalizedMatrix = getNormalizedMatrix();
+      let includedIndicatorIndexes = getIncludedIndicatorIndexes();
+      let headerCells = includedIndicatorIndexes.map((indicatorIndex) => {
+        let indicator = qualityCalculatorState.indicators[indicatorIndex];
+
+        return `
+          <th class="quality-calculator__th">
+            ${escapeHtml(indicator.name)}
+            <br>
+            <span class="quality-calculator__badge">${getScaleLabel(indicator.scale)}</span>
+          </th>
+        `;
+      }).join("");
+
+      let bodyRows = qualityCalculatorState.objects.map((objectData, objectIndex) => {
+        let valueCells = includedIndicatorIndexes.map((indicatorIndex) => {
+          let indicator = qualityCalculatorState.indicators[indicatorIndex];
+
+          if (indicator.scale === "ordinal") {
+            return `
+              <td class="quality-calculator__td">
+                <input class="quality-calculator__input quality-calculator__compact-input" data-field="ordinal-normalized" data-object="${objectIndex}" data-indicator="${indicatorIndex}" type="number" min="0" max="1" step="0.01" value="${escapeHtml(qualityCalculatorState.ordinalValues[objectIndex][indicatorIndex])}" aria-label="Нормировка порядкового показателя">
+              </td>
+            `;
+          }
+
+          return `
+            <td class="quality-calculator__td quality-calculator__td--result">
+              ${formatNumber(normalizedMatrix[objectIndex][indicatorIndex])}
+            </td>
+          `;
+        }).join("");
+
+        return `
+          <tr>
+            <td class="quality-calculator__td">${escapeHtml(objectData.name)}</td>
+            ${valueCells}
+          </tr>
+        `;
+      }).join("");
+
+      if (includedIndicatorIndexes.length === 0) {
+        tableElement.innerHTML = `<div class="quality-calculator__message quality-calculator__message--danger">Нет показателей для нормировки. Добавьте числовую или порядковую шкалу.</div>`;
+        return;
+      }
+
+      tableElement.innerHTML = `
+        <div class="quality-calculator__table-wrap">
+          <table class="quality-calculator__table">
+            <thead>
+              <tr>
+                <th class="quality-calculator__th">Объект</th>
+                ${headerCells}
+              </tr>
+            </thead>
+            <tbody>
+              ${bodyRows}
+            </tbody>
+          </table>
+        </div>
+        <p class="quality-calculator__note">
+          Если у числового показателя все значения одинаковые, нормированное значение принимается равным 1 для всех объектов.
+        </p>
+      `;
+    }
+
+    // Создает HTML таблицы весов.
+    function renderWeightsTable() {
+      let tableElement = document.getElementById("qualityCalculatorWeightsTable");
+      let includedIndicatorIndexes = getIncludedIndicatorIndexes();
+      let weights = getWeights();
+
+      if (includedIndicatorIndexes.length === 0) {
+        tableElement.innerHTML = `<div class="quality-calculator__message quality-calculator__message--danger">Нет показателей для расчета весов.</div>`;
+        return;
+      }
+
+      let indicatorCells = includedIndicatorIndexes.map((indicatorIndex) => {
+        let indicator = qualityCalculatorState.indicators[indicatorIndex];
+
+        return `<th class="quality-calculator__th">${escapeHtml(indicator.name)}</th>`;
+      }).join("");
+
+      let rankCells = includedIndicatorIndexes.map((indicatorIndex) => {
+        let indicator = qualityCalculatorState.indicators[indicatorIndex];
+
+        return `
+          <td class="quality-calculator__td">
+            <input class="quality-calculator__input quality-calculator__compact-input" data-field="indicator-rank" data-indicator="${indicatorIndex}" type="number" min="0.0001" step="0.0001" value="${escapeHtml(indicator.rankSum)}" aria-label="Сумма рангов">
+          </td>
+        `;
+      }).join("");
+
+      let weightCells = includedIndicatorIndexes.map((indicatorIndex) => {
+        return `<td class="quality-calculator__td quality-calculator__td--result">${formatNumber(weights[indicatorIndex])}</td>`;
+      }).join("");
+
+      tableElement.innerHTML = `
+        <div class="quality-calculator__table-wrap">
+          <table class="quality-calculator__table">
+            <tbody>
+              <tr>
+                <th class="quality-calculator__th">Название показателя</th>
+                ${indicatorCells}
+              </tr>
+              <tr>
+                <th class="quality-calculator__th">Сумма рангов S<sub>j</sub></th>
+                ${rankCells}
+              </tr>
+              <tr>
+                <th class="quality-calculator__th">Вес p<sub>j</sub></th>
+                ${weightCells}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="quality-calculator__note">
+          Используется расчет p<sub>j</sub> = (1 / S<sub>j</sub>) / Σ(1 / S<sub>j</sub>). Чем меньше сумма рангов, тем больше вес показателя.
+        </p>
+      `;
+    }
+
+    // Создает HTML таблицы итогового рейтинга.
+    function renderResultsTable() {
+      let tableElement = document.getElementById("qualityCalculatorResultsTable");
+      let conclusionElement = document.getElementById("qualityCalculatorConclusion");
+      let results = getResults();
+      let includedIndicatorIndexes = getIncludedIndicatorIndexes();
+
+      if (includedIndicatorIndexes.length === 0) {
+        tableElement.innerHTML = `<div class="quality-calculator__message quality-calculator__message--danger">Расчет невозможен без числовых или порядковых показателей.</div>`;
+        conclusionElement.innerHTML = "";
+        return;
+      }
+
+      let bodyRows = results.map((result, resultIndex) => {
+        return `
+          <tr>
+            <td class="quality-calculator__td">${resultIndex + 1}</td>
+            <td class="quality-calculator__td">${escapeHtml(result.objectName)}</td>
+            <td class="quality-calculator__td quality-calculator__td--result">${formatNumber(result.qualityValue)}</td>
+          </tr>
+        `;
+      }).join("");
+
+      tableElement.innerHTML = `
+        <div class="quality-calculator__table-wrap">
+          <table class="quality-calculator__table">
+            <thead>
+              <tr>
+                <th class="quality-calculator__th">Место</th>
+                <th class="quality-calculator__th">Объект</th>
+                <th class="quality-calculator__th">Комплексный показатель Q</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${bodyRows}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      conclusionElement.innerHTML = renderConclusion(results);
+    }
+
+    // Формирует текстовый вывод по ранжировке.
+    function renderConclusion(results) {
+      if (results.length === 0) {
+        return "";
+      }
+
+      let bestResult = results[0];
+      let worstResult = results[results.length - 1];
+      let listItems = results.map((result, resultIndex) => {
+        return `<li>${resultIndex + 1} место — ${escapeHtml(result.objectName)}: Q = ${formatNumber(result.qualityValue)}</li>`;
+      }).join("");
+
+      return `
+        <div class="quality-calculator__message">
+          Лучший объект по комплексному показателю качества: ${escapeHtml(bestResult.objectName)}.
+        </div>
+        <div class="quality-calculator__message quality-calculator__message--warning">
+          <p>Ранжировка построена по убыванию Q. Минимальное значение в текущем расчете у объекта «${escapeHtml(worstResult.objectName)}».</p>
+          <ol class="quality-calculator__list">
+            ${listItems}
+          </ol>
+        </div>
+      `;
+    }
+
+    // Выводит предупреждения расчетной модели.
+    function renderWarnings() {
+      let warningsElement = document.getElementById("qualityCalculatorWarnings");
+      let warnings = getWarnings();
+
+      if (warnings.length === 0) {
+        warningsElement.innerHTML = "";
+        return;
+      }
+
+      let warningItems = warnings.map((warningText) => {
+        return `<li>${escapeHtml(warningText)}</li>`;
+      }).join("");
+
+      warningsElement.innerHTML = `
+        <div class="quality-calculator__message quality-calculator__message--warning">
+          <ol class="quality-calculator__list">
+            ${warningItems}
+          </ol>
+        </div>
+      `;
+    }
+
+    // Перерисовывает только расчетные блоки без сброса исходной таблицы.
+    function renderCalculationSections() {
+      renderNormalizationTable();
+      renderWeightsTable();
+      renderResultsTable();
+      renderWarnings();
+    }
+
+    // Перерисовывает всю страницу расчета.
+    function renderAll() {
+      renderDataTable();
+      renderCalculationSections();
+    }
+
+    // Обновляет модель по пользовательскому вводу.
+    function handleRootInput(event) {
+      let target = event.target;
+
+      if (!target.dataset || !target.dataset.field) {
+        return;
+      }
+
+      let fieldName = target.dataset.field;
+      let objectIndex = Number(target.dataset.object);
+      let indicatorIndex = Number(target.dataset.indicator);
+
+      if (fieldName === "object-name") {
+        qualityCalculatorState.objects[objectIndex].name = target.value;
+        renderCalculationSections();
+        return;
+      }
+
+      if (fieldName === "indicator-name") {
+        qualityCalculatorState.indicators[indicatorIndex].name = target.value;
+        renderCalculationSections();
+        return;
+      }
+
+      if (fieldName === "indicator-scale") {
+        qualityCalculatorState.indicators[indicatorIndex].scale = target.value;
+        renderCalculationSections();
+        return;
+      }
+
+      if (fieldName === "indicator-direction") {
+        qualityCalculatorState.indicators[indicatorIndex].direction = target.value;
+        renderCalculationSections();
+        return;
+      }
+
+      if (fieldName === "indicator-rank") {
+        qualityCalculatorState.indicators[indicatorIndex].rankSum = target.value;
+        renderCalculationSections();
+        return;
+      }
+
+      if (fieldName === "indicator-value") {
+        qualityCalculatorState.values[objectIndex][indicatorIndex] = target.value;
+        renderCalculationSections();
+        return;
+      }
+
+      if (fieldName === "ordinal-normalized") {
+        qualityCalculatorState.ordinalValues[objectIndex][indicatorIndex] = target.value;
+        renderCalculationSections();
+      }
+    }
+
+    // Применяет новые размеры таблицы.
+    function handleApplySize() {
+      let objectCountElement = document.getElementById("qualityCalculatorObjectCount");
+      let indicatorCountElement = document.getElementById("qualityCalculatorIndicatorCount");
+      let objectCount = getClampedCount(objectCountElement.value);
+      let indicatorCount = getClampedCount(indicatorCountElement.value);
+
+      objectCountElement.value = objectCount;
+      indicatorCountElement.value = indicatorCount;
+
+      resizeState(objectCount, indicatorCount);
+      renderAll();
+    }
+
+    // Загружает демонстрационный набор данных.
+    function handleLoadExample() {
+      qualityCalculatorState = createInitialState(4, 4);
+
+      qualityCalculatorState.objects = [
+        {
+          name: "Объект А"
+        },
+        {
+          name: "Объект Б"
+        },
+        {
+          name: "Объект В"
+        },
+        {
+          name: "Объект Г"
+        }
+      ];
+
+      qualityCalculatorState.indicators = [
+        {
+          name: "Производительность",
+          scale: "numeric",
+          direction: "positive",
+          rankSum: "3"
+        },
+        {
+          name: "Стоимость",
+          scale: "numeric",
+          direction: "negative",
+          rankSum: "2"
+        },
+        {
+          name: "Удобство",
+          scale: "ordinal",
+          direction: "positive",
+          rankSum: "5"
+        },
+        {
+          name: "Категория",
+          scale: "nominal",
+          direction: "positive",
+          rankSum: "1"
+        }
+      ];
+
+      qualityCalculatorState.values = [
+        ["85", "120", "Высокое", "A"],
+        ["78", "90", "Среднее", "B"],
+        ["92", "150", "Высокое", "A"],
+        ["70", "80", "Низкое", "C"]
+      ];
+
+      qualityCalculatorState.ordinalValues = [
+        ["0.9", "", "0.85", ""],
+        ["0.6", "", "0.6", ""],
+        ["1", "", "0.9", ""],
+        ["0.3", "", "0.35", ""]
+      ];
+
+      document.getElementById("qualityCalculatorObjectCount").value = 4;
+      document.getElementById("qualityCalculatorIndicatorCount").value = 4;
+
+      renderAll();
+    }
+
+    // Готовит лист исходных данных для экспорта.
+    function getSourceSheetData() {
+      let headerRow = ["Объект"];
+
+      for (let indicatorIndex = 0; indicatorIndex < qualityCalculatorState.indicators.length; indicatorIndex += 1) {
+        let indicator = qualityCalculatorState.indicators[indicatorIndex];
+
+        headerRow.push(`${indicator.name} | ${getScaleLabel(indicator.scale)} | ${getDirectionLabel(indicator.direction)}`);
+      }
+
+      let rows = [headerRow];
+
+      for (let objectIndex = 0; objectIndex < qualityCalculatorState.objects.length; objectIndex += 1) {
+        let row = [qualityCalculatorState.objects[objectIndex].name];
+
+        for (let indicatorIndex = 0; indicatorIndex < qualityCalculatorState.indicators.length; indicatorIndex += 1) {
+          row.push(qualityCalculatorState.values[objectIndex][indicatorIndex]);
+        }
+
+        rows.push(row);
+      }
+
+      return rows;
+    }
+
+    // Готовит лист нормировки для экспорта.
+    function getNormalizationSheetData() {
+      let normalizedMatrix = getNormalizedMatrix();
+      let includedIndicatorIndexes = getIncludedIndicatorIndexes();
+      let headerRow = ["Объект"];
+
+      for (let positionIndex = 0; positionIndex < includedIndicatorIndexes.length; positionIndex += 1) {
+        let indicatorIndex = includedIndicatorIndexes[positionIndex];
+
+        headerRow.push(qualityCalculatorState.indicators[indicatorIndex].name);
+      }
+
+      let rows = [headerRow];
+
+      for (let objectIndex = 0; objectIndex < qualityCalculatorState.objects.length; objectIndex += 1) {
+        let row = [qualityCalculatorState.objects[objectIndex].name];
+
+        for (let positionIndex = 0; positionIndex < includedIndicatorIndexes.length; positionIndex += 1) {
+          let indicatorIndex = includedIndicatorIndexes[positionIndex];
+
+          row.push(roundNumber(normalizedMatrix[objectIndex][indicatorIndex]));
+        }
+
+        rows.push(row);
+      }
+
+      return rows;
+    }
+
+    // Готовит лист весов для экспорта.
+    function getWeightsSheetData() {
+      let includedIndicatorIndexes = getIncludedIndicatorIndexes();
+      let weights = getWeights();
+      let nameRow = ["Название показателя"];
+      let rankRow = ["Сумма рангов"];
+      let weightRow = ["Вес"];
+
+      for (let positionIndex = 0; positionIndex < includedIndicatorIndexes.length; positionIndex += 1) {
+        let indicatorIndex = includedIndicatorIndexes[positionIndex];
+        let indicator = qualityCalculatorState.indicators[indicatorIndex];
+
+        nameRow.push(indicator.name);
+        rankRow.push(parseUserNumber(indicator.rankSum) ?? "");
+        weightRow.push(roundNumber(weights[indicatorIndex]));
+      }
+
+      return [nameRow, rankRow, weightRow];
+    }
+
+    // Готовит лист рейтинга для экспорта.
+    function getResultsSheetData() {
+      let results = getResults();
+      let rows = [["Место", "Объект", "Комплексный показатель Q"]];
+
+      for (let resultIndex = 0; resultIndex < results.length; resultIndex += 1) {
+        let result = results[resultIndex];
+
+        rows.push([
+          resultIndex + 1,
+          result.objectName,
+          roundNumber(result.qualityValue)
+        ]);
+      }
+
+      return rows;
+    }
+
+    // Выполняет экспорт расчетных таблиц в XLSX.
+    function handleExportExcel() {
+      if (!window.XLSX) {
+        alert("Библиотека экспорта Excel не загрузилась. Проверьте подключение к интернету.");
+        return;
+      }
+
+      let workbook = XLSX.utils.book_new();
+      let sourceSheet = XLSX.utils.aoa_to_sheet(getSourceSheetData());
+      let normalizationSheet = XLSX.utils.aoa_to_sheet(getNormalizationSheetData());
+      let weightsSheet = XLSX.utils.aoa_to_sheet(getWeightsSheetData());
+      let resultsSheet = XLSX.utils.aoa_to_sheet(getResultsSheetData());
+
+      XLSX.utils.book_append_sheet(workbook, sourceSheet, "Исходные данные");
+      XLSX.utils.book_append_sheet(workbook, normalizationSheet, "Нормировка");
+      XLSX.utils.book_append_sheet(workbook, weightsSheet, "Веса");
+      XLSX.utils.book_append_sheet(workbook, resultsSheet, "Рейтинг");
+
+      XLSX.writeFileXLSX(workbook, "complex-quality-indicator.xlsx");
+    }
+
+    // Подключает обработчики событий страницы.
+    function initQualityCalculator() {
+      qualityCalculatorState = createInitialState(5, 4);
+
+      document.getElementById("qualityCalculatorApplySize").addEventListener("click", handleApplySize);
+      document.getElementById("qualityCalculatorLoadExample").addEventListener("click", handleLoadExample);
+      document.getElementById("qualityCalculatorExportExcel").addEventListener("click", handleExportExcel);
+      document.addEventListener("input", handleRootInput);
+      document.addEventListener("change", handleRootInput);
+
+      renderAll();
+    }
+
+    // Запускает расчетчик после загрузки документа.
+    initQualityCalculator();
+  </script>
+</body>
+</html>
