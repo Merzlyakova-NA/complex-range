@@ -38,7 +38,7 @@
     }
 
     .quality-calculator {
-      max-inline-size: 150vh;
+      max-inline-size: 190vh;
       margin-inline: auto;
     }
 
@@ -169,16 +169,24 @@
     }
 
     .quality-calculator__table {
-      min-inline-size: 128vh;
+      inline-size: max-content;
+      max-inline-size: 100%;
+      min-inline-size: 0;
+      table-layout: fixed;
       border-collapse: separate;
       border-spacing: 0;
     }
 
+    .quality-calculator__table--results {
+      inline-size: 100%;
+    }
+
     .quality-calculator__th,
     .quality-calculator__td {
-      padding: 1.11vh;
+      padding: 0.888vh;
       border-inline-end: 0.111vh solid var(--quality-calculator-border);
       border-block-end: 0.111vh solid var(--quality-calculator-border);
+      overflow-wrap: anywhere;
       vertical-align: top;
       text-align: start;
     }
@@ -199,16 +207,53 @@
     .quality-calculator__indicator-card {
       display: flex;
       flex-direction: column;
-      gap: 0.888vh;
-      min-inline-size: 22vh;
+      gap: 0.777vh;
+      min-inline-size: 0;
     }
 
-    .quality-calculator__compact-input {
-      min-inline-size: 15vh;
+    .quality-calculator__input,
+    .quality-calculator__select {
+      inline-size: 100%;
+      min-inline-size: 0;
     }
 
+    .quality-calculator__compact-input,
     .quality-calculator__wide-input {
-      min-inline-size: 22vh;
+      min-inline-size: 0;
+    }
+
+    .quality-calculator__table--dense .quality-calculator__th,
+    .quality-calculator__table--dense .quality-calculator__td {
+      padding: 0.666vh;
+      font-size: 1.554vh;
+    }
+
+    .quality-calculator__table--dense .quality-calculator__input,
+    .quality-calculator__table--dense .quality-calculator__select {
+      min-block-size: 3.774vh;
+      padding: 0.666vh 0.777vh;
+      font-size: 1.554vh;
+    }
+
+    .quality-calculator__table--dense .quality-calculator__indicator-card {
+      gap: 0.555vh;
+    }
+
+    .quality-calculator__table--compact .quality-calculator__th,
+    .quality-calculator__table--compact .quality-calculator__td {
+      padding: 0.444vh;
+      font-size: 1.332vh;
+    }
+
+    .quality-calculator__table--compact .quality-calculator__input,
+    .quality-calculator__table--compact .quality-calculator__select {
+      min-block-size: 3.33vh;
+      padding: 0.444vh 0.555vh;
+      font-size: 1.332vh;
+    }
+
+    .quality-calculator__table--compact .quality-calculator__indicator-card {
+      gap: 0.444vh;
     }
 
     .quality-calculator__badge {
@@ -483,6 +528,81 @@
       return "Позитивный";
     }
 
+    // Подбирает плотность таблицы по количеству показателей.
+    function getTableDensityClass() {
+      let indicatorCount = qualityCalculatorState.indicators.length;
+
+      if (indicatorCount >= 9) {
+        return "quality-calculator__table--compact";
+      }
+
+      if (indicatorCount >= 5) {
+        return "quality-calculator__table--dense";
+      }
+
+      return "";
+    }
+
+    // Возвращает компактную ширину первого столбца в зависимости от количества показателей.
+    function getObjectColumnWidth(indicatorCount) {
+      if (indicatorCount >= 9) {
+        return 12;
+      }
+
+      if (indicatorCount >= 5) {
+        return 14;
+      }
+
+      return 16;
+    }
+
+    // Возвращает компактную ширину столбца показателя в зависимости от количества показателей.
+    function getIndicatorColumnWidth(indicatorCount) {
+      if (indicatorCount >= 13) {
+        return 9;
+      }
+
+      if (indicatorCount >= 9) {
+        return 10.5;
+      }
+
+      if (indicatorCount >= 7) {
+        return 12.5;
+      }
+
+      if (indicatorCount >= 5) {
+        return 15;
+      }
+
+      return 20;
+    }
+
+    // Формирует colgroup для таблицы с объектами и показателями.
+    function getObjectIndicatorColGroup(indicatorCount) {
+      let objectColumnWidth = getObjectColumnWidth(indicatorCount);
+      let indicatorColumnWidth = getIndicatorColumnWidth(indicatorCount);
+      let indicatorColumns = "";
+
+      for (let indicatorIndex = 0; indicatorIndex < indicatorCount; indicatorIndex += 1) {
+        indicatorColumns += `<col style="width: ${indicatorColumnWidth}vh;">`;
+      }
+
+      return `<colgroup><col style="width: ${objectColumnWidth}vh;">${indicatorColumns}</colgroup>`;
+    }
+
+    // Формирует colgroup для таблицы весов.
+    function getWeightsColGroup(indicatorCount) {
+      let firstColumnWidth = indicatorCount >= 9 ? 16 : 20;
+      let indicatorColumnWidth = getIndicatorColumnWidth(indicatorCount);
+      let indicatorColumns = "";
+
+      for (let indicatorIndex = 0; indicatorIndex < indicatorCount; indicatorIndex += 1) {
+        indicatorColumns += `<col style="width: ${indicatorColumnWidth}vh;">`;
+      }
+
+      return `<colgroup><col style="width: ${firstColumnWidth}vh;">${indicatorColumns}</colgroup>`;
+    }
+
     // Собирает индексы показателей, участвующих в расчетах.
     function getIncludedIndicatorIndexes() {
       let indexes = [];
@@ -682,6 +802,7 @@
     // Создает HTML таблицы исходных данных.
     function renderDataTable() {
       let tableElement = document.getElementById("qualityCalculatorDataTable");
+      let tableDensityClass = getTableDensityClass();
       let headerCells = qualityCalculatorState.indicators.map((indicator, indicatorIndex) => {
         return `
           <th class="quality-calculator__th">
@@ -722,7 +843,8 @@
 
       tableElement.innerHTML = `
         <div class="quality-calculator__table-wrap">
-          <table class="quality-calculator__table">
+          <table class="quality-calculator__table quality-calculator__table--source ${tableDensityClass}">
+            ${getObjectIndicatorColGroup(qualityCalculatorState.indicators.length)}
             <thead>
               <tr>
                 <th class="quality-calculator__th">Объект</th>
@@ -750,6 +872,7 @@
     // Создает HTML таблицы нормировки.
     function renderNormalizationTable() {
       let tableElement = document.getElementById("qualityCalculatorNormalizationTable");
+      let tableDensityClass = getTableDensityClass();
       let normalizedMatrix = getNormalizedMatrix();
       let includedIndicatorIndexes = getIncludedIndicatorIndexes();
       let headerCells = includedIndicatorIndexes.map((indicatorIndex) => {
@@ -798,7 +921,8 @@
 
       tableElement.innerHTML = `
         <div class="quality-calculator__table-wrap">
-          <table class="quality-calculator__table">
+          <table class="quality-calculator__table quality-calculator__table--normalization ${tableDensityClass}">
+            ${getObjectIndicatorColGroup(includedIndicatorIndexes.length)}
             <thead>
               <tr>
                 <th class="quality-calculator__th">Объект</th>
@@ -819,6 +943,7 @@
     // Создает HTML таблицы весов.
     function renderWeightsTable() {
       let tableElement = document.getElementById("qualityCalculatorWeightsTable");
+      let tableDensityClass = getTableDensityClass();
       let includedIndicatorIndexes = getIncludedIndicatorIndexes();
       let weights = getWeights();
 
@@ -849,7 +974,8 @@
 
       tableElement.innerHTML = `
         <div class="quality-calculator__table-wrap">
-          <table class="quality-calculator__table">
+          <table class="quality-calculator__table quality-calculator__table--weights ${tableDensityClass}">
+            ${getWeightsColGroup(includedIndicatorIndexes.length)}
             <tbody>
               <tr>
                 <th class="quality-calculator__th">Название показателя</th>
@@ -897,7 +1023,7 @@
 
       tableElement.innerHTML = `
         <div class="quality-calculator__table-wrap">
-          <table class="quality-calculator__table">
+          <table class="quality-calculator__table quality-calculator__table--results">
             <thead>
               <tr>
                 <th class="quality-calculator__th">Место</th>
